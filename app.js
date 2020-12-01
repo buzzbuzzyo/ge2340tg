@@ -8,9 +8,9 @@ var net = new brain.NeuralNetwork();
 
 // Predefined bot response description
 var botResponseDescription = [
-  //Greeting : 0
+  // Greeting : 0
   "",
-  //Bye : 1
+  // Farewell : 1
   "",
   // Purpose : 2
   "",
@@ -30,11 +30,11 @@ var botResponseDescription = [
 
 // Predefined bot response
 var botResponse = [
-  //Greeting : 0
+  // Greeting : 0
   ["Hello! Welcome! (＠´ー`)ﾉﾞ",
     "Hi~ ( ´ ▽ ` )ﾉ",
     "Welcome! (o´▽`o)ﾉ"],
-  //Bye : 1
+  // Farewell : 1
   ["Good Night! (´-εヾ )",
     "Have a good sleep! ꒰◍ᐡᐤᐡ◍꒱",
     "Sleep tight! (︶▽︶)zzZ"],
@@ -85,7 +85,7 @@ var botResponse = [
       "https://www.youtube.com/watch?v=XoagfiWOuBE"],
     // Human
     [
-      //Male
+      // Male
       ["https://www.youtube.com/watch?v=wmQ8s3dmo0E ",
         "https://www.youtube.com/watch?v=BtF85dQUMKg ",
         "https://www.youtube.com/watch?v=jO2viLEW-1A ",
@@ -102,7 +102,7 @@ var botResponse = [
         "https://www.youtube.com/watch?v=m78lJuzftcc ",
         "https://www.youtube.com/watch?v=HQ_mU73VhEQ ",
         "https://www.youtube.com/watch?v=GjcpFsBSw2Y "],
-      //Female
+      // Female
       ["https://www.youtube.com/watch?v=ZAfAud_M_mg ",
         "https://www.youtube.com/watch?v=DyDfgMOUjCI ",
         "https://www.youtube.com/watch?v=fdQgPu3iUYk ",
@@ -384,7 +384,6 @@ bot.help((ctx) => {
 bot.on('message', (ctx) => {
   // Save latest message 
   latestmsg = ctx.message.text;
-
   // Convert latest message to binary
   var data = textToBinary(latestmsg);
   // Do prediction
@@ -397,8 +396,12 @@ bot.on('message', (ctx) => {
         reply_markup: {
           inline_keyboard: [
             [
-              { text: "Instrumental", callback_data: "music-instrumental" },
+              { text: "Instrumental music", callback_data: "music-instrumental" },
+            ],
+            [
               { text: "Male Singer", callback_data: "music-male" },
+            ],
+            [
               { text: "Female Singer", callback_data: "music-female" }
             ]
           ]
@@ -460,7 +463,7 @@ bot.action('music-instrumental', (ctx) => {
 bot.action('music-male', (ctx) => {
   ctx.deleteMessage();
   ctx.reply(botResponseDescription[5]);
-  var category = botResponse[5][1];
+  var category = botResponse[5][1][0];
   var response = category[Math.floor(Math.random() * category.length)];
   setTimeout(function () {
     ctx.reply(response);
@@ -471,7 +474,7 @@ bot.action('music-male', (ctx) => {
 bot.action('music-female', (ctx) => {
   ctx.deleteMessage();
   ctx.reply(botResponseDescription[5]);
-  var category = botResponse[5][2];
+  var category = botResponse[5][1][1];
   var response = category[Math.floor(Math.random() * category.length)];
   setTimeout(function () {
     ctx.reply(response);
@@ -608,6 +611,12 @@ function retrain(command) {
   // Create new data with the response and the category
   // Push into training set 
   trainSet.push({ input: textToBinary(latestmsg), output: { [command]: 1 } });
+  for (i = 0; i < trainSet.length; i++) {
+    if (trainSet[i].input.length < maxLen) {
+      var remainingLength = maxLen - trainSet[i].input.length;
+      trainSet[i].input = trainSet[i].input.concat(Array(remainingLength).fill(0));
+    }
+  }
   // retrain the bot
   net = new brain.NeuralNetwork();
   net.train(trainSet, {
@@ -627,20 +636,14 @@ function textToBinary(input) {
   for (i = 0; i < input.length; i++) {
     code += input[i].charCodeAt(0).toString(2);
   }
-  //console.log(code)
   for (i = 0; i < code.length; i++) {
     text = text.concat([parseInt(code[i])]);
   }
-  //console.log(text)
   if (text.length > maxLen) {
     maxLen = text.length;
-    //	console.log(maxLen);
   }
   else {
     text = text.concat(Array(maxLen - text.length).fill(0));
   }
-  //FOR DEBUG 
-  //console.log(input)
-  //console.log(text)
   return text;
 }
