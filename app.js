@@ -3,7 +3,10 @@ const brain = require('brain.js')
 
 const bot = new Telegraf('1427053400:AAE7aQ8KF7lQvHxC572N4tXDk6nUCBQBpfs')
 
+// Initialize Neural Network
 var net = new brain.NeuralNetwork();
+
+// Predefined bot response description
 var botResponseDescription = [
     //Greeting : 0
     "",
@@ -24,6 +27,8 @@ var botResponseDescription = [
     // Sleep Quote : 7
     "Sleep is good for you! Let me tell you a quote!"
 ];
+
+// Predefined bot response
 var botResponse = [
     //Greeting : 0
     ["Hello! Welcome!",
@@ -198,6 +203,19 @@ var trainSet = [];
 var maxLen = 0;
 var latestmsg = "";
 
+// Build the training set
+// Input: Possible keywords (in array of binary numbers)
+// Output: Response (in categories)
+// Greeting : 0
+// Goodbye: 1
+// Telling the purpose of the bot: 2
+// Tell a joke: 3
+// Tell a fun fact: 4
+// Suggest a song: 5
+// Suggest a video: 6
+// Tell a motivatioal quote: 7
+// Tell a quote about sleeping: 8 
+
 //Greeting : 0
 trainSet.push({ input: textToBinary("Hi"), output: {[0]: 1} }); 
 trainSet.push({ input: textToBinary("Hey"), output: {[0]: 1} }); 
@@ -219,7 +237,7 @@ trainSet.push({ input:  textToBinary("What are you?"), output: {[2]: 1} });
 trainSet.push({ input:  textToBinary("Who is this?"), output: {[2]: 1} }); 
 																																																								   																														 
 // Joke : 3
-trainSet.push({ input:  textToBinary("joke"), output: {[3]: 1} });
+trainSet.push({ input:  textToBinary("Joke"), output: {[3]: 1} });
 trainSet.push({ input:  textToBinary("Tell me a joke!"), output: {[3]: 1} }); 
 trainSet.push({ input:  textToBinary("I am sad"), output: {[3]: 1} }); 
 trainSet.push({ input:  textToBinary("sad"), output: {[3]: 1} }); 
@@ -251,6 +269,7 @@ trainSet.push({ input:  textToBinary("Animal"), output: {[6]: 1} });
 trainSet.push({ input:  textToBinary("Cartoon"), output: {[6]: 1} }); 
 
 // Motivational Quote : 7
+trainSet.push({ input:  textToBinary("want some hope"), output: {[7]: 1} }); 
 trainSet.push({ input:  textToBinary("motivational quote"), output: {[7]: 1} }); 
 trainSet.push({ input:  textToBinary("quote"), output: {[7]: 1} }); 
 trainSet.push({ input:  textToBinary("stressful"), output: {[7]: 1} }); 
@@ -274,6 +293,7 @@ trainSet.push({ input:  textToBinary("I don't want to sleep"), output: {[8]: 1} 
 trainSet.push({ input:  textToBinary("I can't sleep"), output: {[8]: 1} }); 
 trainSet.push({ input:  textToBinary("Why should I sleep?"), output: {[8]: 1} }); 
 
+// Normalize all data to same length
 for (i=0; i< trainSet.length; i++){
 	if (trainSet[i].input.length < maxLen){
 		var remainingLength = maxLen - trainSet[i].input.length;
@@ -281,30 +301,38 @@ for (i=0; i< trainSet.length; i++){
 	}
 }
 
-//Training
+// Training
 net.train(trainSet, {
 	errorThresh: 0.005,  // error threshold to reach before completion
 	log: false,           // console.log() progress periodically 
-	logPeriod: 10,       // number of iterations between logging 
-	learningRate: 0.3    // learning rate 
-}); //Using all the training data to train the AI
+	logPeriod: 10,       // number of iterations between logging  
+}); 
 
+// /start -> say Hello, introduce itself
 bot.start((ctx) => {
   
-  ctx.reply("Hello! Welcome!");
+  ctx.reply("Hello! Welcome! This bot can talk to you when you cannot fall asleep :) You can ask me to tell you a joke, suggest video or music, tell you quotes. Just say anything!");
 })
 
+// /help -> Tell the purpose of this bot
 bot.help((ctx) => {
   ctx.reply("This bot can talk to you when you cannot fall asleep :) You can ask me to tell you a joke, suggest video or music, tell you quotes. Just say anything!");
 })
 
+// When recieve a message 
 bot.on('message', (ctx) => {
+  // Save latest message 
   latestmsg = ctx.message.text;
-  var data = textToBinary(ctx.message.text);
+
+  // Convert latest message to binary
+  var data = textToBinary(latestmsg);
+  // Do prediction
   var result = brain.likely(data, net);
+  // Suggesting a song,
   if(result == 5){
     ctx.telegram.sendMessage(ctx.chat.id,"What kind of music do you want?",
       {
+        // Ask about what kind of music
         reply_markup: {
           inline_keyboard: [
             [
@@ -315,9 +343,11 @@ bot.on('message', (ctx) => {
           ]
         }
       })
+  // Suggesting a video
   } else if (result == 6){
     ctx.telegram.sendMessage(ctx.chat.id,"Do you want cartoon video or animal video?",
     {
+      // Ask what kind of video 
       reply_markup: {
         inline_keyboard: [
           [
@@ -326,9 +356,11 @@ bot.on('message', (ctx) => {
         ]
       }
     })
+  // Joke, Fun facts, Quotes, Greetings
   } else {
     var category = botResponse[result];
     var response;
+    // Give descriptions for joke, fun facts and quotes
     if(result > 2){
       ctx.reply(botResponseDescription[result]);
     }
@@ -336,22 +368,23 @@ bot.on('message', (ctx) => {
     setTimeout(function(){
       ctx.reply(response);
     },800);
-    setTimeout(function(){
-      ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
-            ]
-          ]
-        }
-      })
-    },800);
   }
+  // Ask if it is a good response 
+  setTimeout(function(){
+    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
+          ]
+        ]
+      }
+    })
+  },1600);
 })
 
-
+// Instrumental music 
 bot.action('music-instrumental',(ctx) => {
   ctx.deleteMessage();
   ctx.reply(botResponseDescription[5]);
@@ -360,20 +393,9 @@ bot.action('music-instrumental',(ctx) => {
   setTimeout(function(){
     ctx.reply(response);
   },800);
-  setTimeout(function(){
-    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
-          ]
-        ]
-      }
-    })
-  },800);
 })
 
+// Song by male singer
 bot.action('music-male',(ctx) => {
   ctx.deleteMessage();
   ctx.reply(botResponseDescription[5]);
@@ -382,20 +404,9 @@ bot.action('music-male',(ctx) => {
   setTimeout(function(){
     ctx.reply(response);
   },800);
-  setTimeout(function(){
-    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
-          ]
-        ]
-      }
-    })
-  },800);
 })
 
+// Song by female singer
 bot.action('music-female',(ctx) => {
   ctx.deleteMessage();
   ctx.reply(botResponseDescription[5]);
@@ -404,20 +415,9 @@ bot.action('music-female',(ctx) => {
   setTimeout(function(){
     ctx.reply(response);
   },800);
-  setTimeout(function(){
-    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
-          ]
-        ]
-      }
-    })
-  },800);
 })
 
+// Cartoon video
 bot.action('video-cartoon',(ctx) => {
   ctx.deleteMessage();
   ctx.reply(botResponseDescription[6]);
@@ -426,20 +426,9 @@ bot.action('video-cartoon',(ctx) => {
   setTimeout(function(){
     ctx.reply(response);
   },800);
-  setTimeout(function(){
-    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
-          ]
-        ]
-      }
-    })
-  },800);
 })
 
+// Animal video
 bot.action('video-animal',(ctx) => {
   ctx.deleteMessage();
   ctx.reply(botResponseDescription[6]);
@@ -448,34 +437,20 @@ bot.action('video-animal',(ctx) => {
   setTimeout(function(){
     ctx.reply(response);
   },800);
-  setTimeout(function(){
-    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [
-            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
-          ]
-        ]
-      }
-    })
-  },800);
 })
 
+// Good response 
 bot.action('good-res',(ctx) => {
   ctx.deleteMessage();
   ctx.reply("Thank you! I am glad to hear that!")
 })
 
-bot.action('good-res',(ctx) => {
-  ctx.deleteMessage();
-  ctx.reply("Thank you! I am glad to hear that!")
-})
-
+// Bad response
 bot.action('bad-res',(ctx) => {
   ctx.deleteMessage();
   ctx.telegram.sendMessage(ctx.chat.id,"I am sorry :( Can you teach me what should I do to respond to your sentence?",
     {
+      // Ask which category should the prediction be 
       reply_markup: {
         inline_keyboard: [
           [
@@ -510,6 +485,7 @@ bot.action('bad-res',(ctx) => {
     })
 })
 
+// Train the bot again with the response
 bot.action('train-0',(ctx) => {
   retrain(0);
    ctx.deleteMessage();
@@ -566,8 +542,12 @@ bot.action('train-8',(ctx) => {
 
 bot.launch()
 
+// Retrain the bot
 function retrain(command){
+  // Create new data with the response and the category
+  // Push into training set 
   trainSet.push({ input:  textToBinary(latestmsg), output: {[command]: 1} }); 
+  // retrain the bot
   net = new brain.NeuralNetwork();
   net.train(trainSet, {
     errorThresh: 0.005,  // error threshold to reach before completion
@@ -578,7 +558,7 @@ function retrain(command){
 }
 
 
-
+// Turn text to binary
 function textToBinary(input){
 	input = input.toUpperCase();
 	var text = [];
