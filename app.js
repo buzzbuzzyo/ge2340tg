@@ -1,23 +1,29 @@
-process.on('unhandledRejection', error => {
-  console.error('unhandledRejection', error);
-  process.exit(1) // To exit with a 'failure' code
-});
-
 const Telegraf = require('telegraf')
 const brain = require('brain.js')
 
 const bot = new Telegraf('1427053400:AAE7aQ8KF7lQvHxC572N4tXDk6nUCBQBpfs')
-const options = {
-  hostname: 'api.telegram.org',
-  port: 443,
-  path: `/bot${config.telegram.botToken}/sendMessage`,
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Content-Length': data.length
-  }
-};
+
 var net = new brain.NeuralNetwork();
+var botResponseDescription = [
+    //Greeting : 0
+    "",
+    //Bye : 1
+    "",
+    // Purpose : 2
+    "",
+    // Joke : 3
+    "Let me tell you a joke! Have a good laugh!", 
+    // Fun facts: 4
+    "Let me tell you a fun fact! Here is something to learn!",
+    // Music: 5
+    "Let me suggest a song for you to help you sleep!",
+    // Video : 6
+    "Let me suggest a video to help you get relaxed",
+    // Motivational Quote : 7
+    "Cheer up! Let me tell you a motivational quote!",
+    // Sleep Quote : 7
+    "Sleep is good for you! Let me tell you a quote!"
+];
 var botResponse = [
     //Greeting : 0
     ["Hello! Welcome!",
@@ -190,7 +196,7 @@ var botResponse = [
 ];
 var trainSet = [];
 var maxLen = 0;
-var commands = botResponse.length;
+var latestmsg = "";
 
 //Greeting : 0
 trainSet.push({ input: textToBinary("Hi"), output: {[0]: 1} }); 
@@ -245,6 +251,8 @@ trainSet.push({ input:  textToBinary("Animal"), output: {[6]: 1} });
 trainSet.push({ input:  textToBinary("Cartoon"), output: {[6]: 1} }); 
 
 // Motivational Quote : 7
+trainSet.push({ input:  textToBinary("motivational quote"), output: {[7]: 1} }); 
+trainSet.push({ input:  textToBinary("quote"), output: {[7]: 1} }); 
 trainSet.push({ input:  textToBinary("stressful"), output: {[7]: 1} }); 
 trainSet.push({ input:  textToBinary("lost"), output: {[7]: 1} }); 
 trainSet.push({ input:  textToBinary("hopeless"), output: {[7]: 1} }); 
@@ -255,6 +263,7 @@ trainSet.push({ input:  textToBinary("What is life?"), output: {[7]: 1} });
 
 
 // Sleeping quote : 8
+trainSet.push({ input:  textToBinary("sleep quote"), output: {[8]: 1} }); 
 trainSet.push({ input:  textToBinary("I want to sleep"), output: {[8]: 1} }); 
 trainSet.push({ input:  textToBinary("Sleep"), output: {[8]: 1} }); 
 trainSet.push({ input:  textToBinary("Sleepy"), output: {[8]: 1} }); 
@@ -272,8 +281,6 @@ for (i=0; i< trainSet.length; i++){
 	}
 }
 
-console.log(trainSet);
-
 //Training
 net.train(trainSet, {
 	errorThresh: 0.005,  // error threshold to reach before completion
@@ -288,23 +295,287 @@ bot.start((ctx) => {
 })
 
 bot.help((ctx) => {
-  ctx.reply("This bot can talk to you when you cannot fall asleep :)");
+  ctx.reply("This bot can talk to you when you cannot fall asleep :) You can ask me to tell you a joke, suggest video or music, tell you quotes. Just say anything!");
 })
 
 bot.on('message', (ctx) => {
+  latestmsg = ctx.message.text;
   var data = textToBinary(ctx.message.text);
   var result = brain.likely(data, net);
-  var category = botResponse[result];
-  var response;
-  if(response == 5) {
-
+  if(result == 5){
+    ctx.telegram.sendMessage(ctx.chat.id,"What kind of music do you want?",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {text:"Instrumental", callback_data:"music-instrumental"},
+              {text:"Male Singer", callback_data: "music-male"},
+              {text:"Female Singer", callback_data: "music-female"}
+            ]
+          ]
+        }
+      })
+  } else if (result == 6){
+    ctx.telegram.sendMessage(ctx.chat.id,"Do you want cartoon video or animal video?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Cartoon", callback_data:"video-cartoon"},{text:"Animal", callback_data: "video-animal"}
+          ]
+        ]
+      }
+    })
   } else {
-    category[Math.floor(Math.random() * category.length)]
+    var category = botResponse[result];
+    var response;
+    if(result > 2){
+      ctx.reply(botResponseDescription[result]);
+    }
+    response = category[Math.floor(Math.random() * category.length)];
+    setTimeout(function(){
+      ctx.reply(response);
+    },800);
+    setTimeout(function(){
+      ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
+            ]
+          ]
+        }
+      })
+    },800);
   }
-  ctx.reply(response);
+})
+
+
+bot.action('music-instrumental',(ctx) => {
+  ctx.deleteMessage();
+  ctx.reply(botResponseDescription[5]);
+  var category = botResponse[5][0];
+  var response = category[Math.floor(Math.random() * category.length)];
+  setTimeout(function(){
+    ctx.reply(response);
+  },800);
+  setTimeout(function(){
+    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
+          ]
+        ]
+      }
+    })
+  },800);
+})
+
+bot.action('music-male',(ctx) => {
+  ctx.deleteMessage();
+  ctx.reply(botResponseDescription[5]);
+  var category = botResponse[5][1];
+  var response = category[Math.floor(Math.random() * category.length)];
+  setTimeout(function(){
+    ctx.reply(response);
+  },800);
+  setTimeout(function(){
+    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
+          ]
+        ]
+      }
+    })
+  },800);
+})
+
+bot.action('music-female',(ctx) => {
+  ctx.deleteMessage();
+  ctx.reply(botResponseDescription[5]);
+  var category = botResponse[5][2];
+  var response = category[Math.floor(Math.random() * category.length)];
+  setTimeout(function(){
+    ctx.reply(response);
+  },800);
+  setTimeout(function(){
+    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
+          ]
+        ]
+      }
+    })
+  },800);
+})
+
+bot.action('video-cartoon',(ctx) => {
+  ctx.deleteMessage();
+  ctx.reply(botResponseDescription[6]);
+  var category = botResponse[6][0];
+  var response = category[Math.floor(Math.random() * category.length)];
+  setTimeout(function(){
+    ctx.reply(response);
+  },800);
+  setTimeout(function(){
+    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
+          ]
+        ]
+      }
+    })
+  },800);
+})
+
+bot.action('video-animal',(ctx) => {
+  ctx.deleteMessage();
+  ctx.reply(botResponseDescription[6]);
+  var category = botResponse[6][1];
+  var response = category[Math.floor(Math.random() * category.length)];
+  setTimeout(function(){
+    ctx.reply(response);
+  },800);
+  setTimeout(function(){
+    ctx.telegram.sendMessage(ctx.chat.id,"Is it a good response?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Yes!", callback_data:"good-res"},{text:"No :(", callback_data: "bad-res"}
+          ]
+        ]
+      }
+    })
+  },800);
+})
+
+bot.action('good-res',(ctx) => {
+  ctx.deleteMessage();
+  ctx.reply("Thank you! I am glad to hear that!")
+})
+
+bot.action('good-res',(ctx) => {
+  ctx.deleteMessage();
+  ctx.reply("Thank you! I am glad to hear that!")
+})
+
+bot.action('bad-res',(ctx) => {
+  ctx.deleteMessage();
+  ctx.telegram.sendMessage(ctx.chat.id,"I am sorry :( Can you teach me what should I do to respond to your sentence?",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            {text:"Say Hi!", callback_data:"train-0"},
+          ],
+          [
+            {text:"Say bye!", callback_data: "train-1"},
+          ],
+          [
+            {text:"Tell me the purpose of this bot!", callback_data:"train-2"},
+          ],
+          [
+            {text:"Tell me a joke!", callback_data:"train-3"},
+          ],
+          [
+            {text:"Tell me a fun fact!", callback_data:"train-4"},
+          ],
+          [
+            {text:"Suggest me a video!", callback_data:"train-5"},
+          ],
+          [
+            {text:"Suggest me a song!", callback_data:"train-6"},
+          ],
+          [
+            {text:"Tell me a motivational quote!", callback_data:"train-7"},
+          ],
+          [
+            {text:"Tell me a sleep quote!", callback_data:"train-8"},
+          ]
+        ]
+      }
+    })
+})
+
+bot.action('train-0',(ctx) => {
+  retrain(0);
+   ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-1',(ctx) => {
+  retrain(1);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-2',(ctx) => {
+  retrain(2);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-3',(ctx) => {
+  retrain(3);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-4',(ctx) => {
+  retrain(4);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-5',(ctx) => {
+  retrain(5);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-6',(ctx) => {
+  retrain(6);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-7',(ctx) => {
+  retrain(7);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
+})
+
+bot.action('train-8',(ctx) => {
+  retrain(8);
+  ctx.deleteMessage();
+  ctx.reply("Thank you for making me smarter!")
 })
 
 bot.launch()
+
+function retrain(command){
+  trainSet.push({ input:  textToBinary(latestmsg), output: {[command]: 1} }); 
+  net = new brain.NeuralNetwork();
+  net.train(trainSet, {
+    errorThresh: 0.005,  // error threshold to reach before completion
+    log: false,           // console.log() progress periodically 
+    logPeriod: 10,       // number of iterations between logging 
+    learningRate: 0.3    // learning rate 
+  }); //Using all the training data to train the AI
+}
 
 
 
@@ -314,13 +585,15 @@ function textToBinary(input){
 	var code = "";
 	for (i=0;i<input.length;i++){
 		code += input[i].charCodeAt(0).toString(2);
-	}
+  }
+   //console.log(code)
 	for(i=0;i<code.length;i++){
 		text = text.concat([parseInt(code[i])]);
-	}
+  }
+  //console.log(text)
 	if (text.length > maxLen){
 		maxLen = text.length;
-		console.log(maxLen);
+	//	console.log(maxLen);
 	} 
 	else{
 		text = text.concat(Array(maxLen - text.length).fill(0));
