@@ -6,4 +6,5 @@ In order to start the bot,
 3. cd to the location of the project
 4. type "npm rebuild", click enter
 5. type "node app.js", click enter
+
 Then, the bot should be running!
