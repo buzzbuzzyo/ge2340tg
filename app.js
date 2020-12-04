@@ -225,6 +225,8 @@ var latestmsg = "";
 // Tell a motivatioal quote: 7
 // Tell a quote about sleeping: 8 
 
+console.log("running...")
+
 //Greeting : 0
 trainSet.push({ input: textToBinary("Hi"), output: { [0]: 1 } });
 trainSet.push({ input: textToBinary("Hey"), output: { [0]: 1 } });
@@ -250,6 +252,7 @@ trainSet.push({ input: textToBinary("yo yo yo"), output: { [0]: 1 } });
 
 //Bye : 1
 trainSet.push({ input: textToBinary("Bye"), output: { [1]: 1 } });
+trainSet.push({ input: textToBinary("Bye"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("bye"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("Goodbye"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("Goodnight"), output: { [1]: 1 } });
@@ -261,6 +264,7 @@ trainSet.push({ input: textToBinary("good bye"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("good night"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("Bye Bye"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("bye bye"), output: { [1]: 1 } });
+trainSet.push({ input: textToBinary("See u later"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("See you later"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("Talk to you later"), output: { [1]: 1 } });
 trainSet.push({ input: textToBinary("I am off"), output: { [1]: 1 } });
@@ -278,12 +282,16 @@ trainSet.push({ input: textToBinary("Purpose?"), output: { [2]: 1 } });
 trainSet.push({ input: textToBinary("How can you help?"), output: { [2]: 1 } });
 trainSet.push({ input: textToBinary("What are you?"), output: { [2]: 1 } });
 trainSet.push({ input: textToBinary("?"), output: { [2]: 1 } });
+trainSet.push({ input: textToBinary("?"), output: { [2]: 1 } });
 trainSet.push({ input: textToBinary("usage?"), output: { [2]: 1 } });
+trainSet.push({ input: textToBinary("Who are you"), output: { [2]: 1 } });
+trainSet.push({ input: textToBinary("Who are u"), output: { [2]: 1 } });
 trainSet.push({ input: textToBinary("Who are you?"), output: { [2]: 1 } });
 trainSet.push({ input: textToBinary("Why here?"), output: { [2]: 1 } });
 trainSet.push({ input: textToBinary("Are you"), output: { [2]: 1 } });
 
 // Joke : 3
+trainSet.push({ input: textToBinary("Joke"), output: { [3]: 1 } });
 trainSet.push({ input: textToBinary("Joke"), output: { [3]: 1 } });
 trainSet.push({ input: textToBinary("Tell me a joke!"), output: { [3]: 1 } });
 trainSet.push({ input: textToBinary("I am sad"), output: { [3]: 1 } });
@@ -305,7 +313,9 @@ trainSet.push({ input: textToBinary("anything"), output: { [4]: 1 } });
 // Music: 5
 trainSet.push({ input: textToBinary("Play me some music"), output: { [5]: 1 } });
 trainSet.push({ input: textToBinary("Music"), output: { [5]: 1 } });
-trainSet.push({ input: textToBinary("Play me a song"), output: { [5]: 1 } });
+trainSet.push({ input: textToBinary("Music"), output: { [5]: 1 } });
+trainSet.push({ input: textToBinary("Want a song"), output: { [5]: 1 } });
+trainSet.push({ input: textToBinary("Want some music"), output: { [5]: 1 } });
 trainSet.push({ input: textToBinary("Song"), output: { [5]: 1 } });
 trainSet.push({ input: textToBinary("Sound"), output: { [5]: 1 } });
 
@@ -340,12 +350,13 @@ trainSet.push({ input: textToBinary("worst"), output: { [7]: 1 } });
 
 // Sleeping quote : 8
 trainSet.push({ input: textToBinary("sleep quote"), output: { [8]: 1 } });
-trainSet.push({ input: textToBinary("I want to sleep"), output: { [8]: 1 } });
+trainSet.push({ input: textToBinary("sleep"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("Cant't sleep"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("Sleepy"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("Cannot sleep"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("Want to sleep"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("Dream"), output: { [8]: 1 } });
+trainSet.push({ input: textToBinary("I don't want to sleep"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("I don't want to sleep"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("I can't sleep"), output: { [8]: 1 } });
 trainSet.push({ input: textToBinary("Why should I sleep?"), output: { [8]: 1 } });
@@ -371,7 +382,7 @@ net.train(trainSet, {
 
 // /start -> say Hello, introduce itself
 bot.start((ctx) => {
-
+  console.log("started")
   ctx.reply("Hello! Welcome! This bot can talk to you when you cannot fall asleep :) You can ask me to tell you a joke, suggest video or music, tell you quotes. Just say anything!");
 })
 
